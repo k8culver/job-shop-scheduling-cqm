@@ -46,6 +46,11 @@ from dash_html import set_html
 cache = diskcache.Cache("./cache")
 background_callback_manager = DiskcacheManager(cache)
 
+import multiprocess
+
+if multiprocess.get_start_method(allow_none=True) is None:
+    multiprocess.set_start_method("spawn")
+
 from app_configs import (
     APP_TITLE,
     CLASSICAL_TAB_LABEL,
@@ -419,4 +424,4 @@ app.clientside_callback(
 
 # Run the server
 if __name__ == "__main__":
-    app.run_server(debug=DEBUG)
+    app.run(debug=DEBUG)
