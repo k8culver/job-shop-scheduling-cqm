@@ -26,7 +26,7 @@ Explore the Gantt Chart for solution details.
 """
 
 CLASSICAL_TAB_LABEL = "Classical Results"
-DWAVE_TAB_LABEL = "D-Wave Results"
+DWAVE_TAB_LABEL = "Hybrid Results"
 
 # The list of scenarios that the user can choose from in the app.
 # These can be found in the 'input' directory.

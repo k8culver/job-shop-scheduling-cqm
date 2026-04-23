@@ -141,7 +141,7 @@ def generate_settings_form() -> html.Div:
     solver_options = generate_options(SolverType)
 
     return html.Div(
-        id="control-card",
+        className="settings",
         children=[
             dropdown(
                 "Scenario (jobs x resources)",
@@ -158,6 +158,7 @@ def generate_settings_form() -> html.Div:
                 "solver-select",
                 solver_options,
                 values=[solver_options[0]["value"]],
+                inline=False,
             ),
             html.Label("Solver Time Limit (seconds)", htmlFor="solver-time-limit"),
             dmc.NumberInput(

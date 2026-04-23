@@ -32,6 +32,7 @@ Apache License, Version 2.0
 
 import pathlib
 import time
+from typing import NamedTuple
 
 import dash
 from dash import MATCH
@@ -99,7 +100,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[s
 def update_solver_options(
     model: int, selected_solvers: list[int], last_selected_solvers: list[int]
 ) -> tuple[str, list[int], list[int]]:
-    """Hides and shows classical solver option using 'hide-classic' class
+    """Hides and shows classical solver option using 'hide-classic' class.
 
     Args:
         model_value: Currently selected model from model-select dropdown.
@@ -107,9 +108,11 @@ def update_solver_options(
         last_selected_solvers: Previously selected solvers.
 
     Returns:
-        str: The new class name of the solver-select checklist.
-        list: Unselects MIP and selects Hybrid or updates to previously selected solvers.
-        list: Updates last_selected_solvers with the list of solvers that were selected before updating.
+        solver-select-className: The new class name of the solver-select checklist.
+        solver-select-value: Unselects MIP and selects Hybrid or updates to previously selected
+            solvers.
+        last-selected-solvers: Updates last_selected_solvers with the list of solvers that were
+            selected before updating.
     """
     model = Model(int(model))
 
@@ -117,6 +120,19 @@ def update_solver_options(
         return "hide-classic", [SolverType.HYBRID.value], selected_solvers
     return "", last_selected_solvers, dash.no_update
 
+
+class UpdateTabLoadingStateReturn(NamedTuple):
+    """Return type for the ``update_tab_loading_state`` callback function."""
+
+    dwave_tab_label: str = DWAVE_TAB_LABEL
+    mip_tab_label: str = CLASSICAL_TAB_LABEL
+    dwave_tab_disabled: str = dash.no_update
+    mip_tab_disabled: str = dash.no_update
+    run_button_style: dict = {}
+    cancel_button_style: dict = {"display": "none"}
+    running_dwave: bool = False
+    running_classical: bool = False
+    active_tab: str = dash.no_update
 
 @dash.callback(
     Output("dwave-tab", "children", allow_duplicate=True),
@@ -137,7 +153,7 @@ def update_solver_options(
 )
 def update_tab_loading_state(
     run_click: int, cancel_click: int, solvers: list[str]
-) -> tuple[str, str, bool, bool, str, str, str, str, bool, bool, str]:
+) -> UpdateTabLoadingStateReturn:
     """Updates the tab loading state after the run button
     or cancel button has been clicked.
 
@@ -147,46 +163,36 @@ def update_tab_loading_state(
         solvers: The list of selected solvers.
 
     Returns:
-        str: The label for the D-Wave tab.
-        str: The label for the Classical tab.
-        bool: True if D-Wave tab should be disabled, False otherwise.
-        bool: True if Classical tab should be disabled, False otherwise.
-        str: Class name for the D-Wave tab.
-        str: Class name for the Classical tab.
-        dict: Run button style.
-        dict: Cancel button style.
-        bool: Whether Hybrid is running.
-        bool: Whether MIP is running.
-        str: The value of the tab that should be active.
+        dwave_tab_label: The label for the D-Wave tab.
+        mip_tab_label: The label for the Classical tab.
+        dwave_tab_disabled: True if D-Wave tab should be disabled, False otherwise.
+        mip_tab_disabled: True if Classical tab should be disabled, False otherwise.
+        run_button_style: Style for the run button.
+        cancel_button_style: Style for the cancel button.
+        running_dwave: Whether Hybrid is running.
+        running_classical: Whether MIP is running.
+        active_tab: The value of the tab that should be active.
     """
 
     if ctx.triggered_id == "run-button" and run_click > 0:
         run_hybrid = f"{SolverType.HYBRID.value}" in solvers
         run_mip = f"{SolverType.MIP.value}" in solvers
 
-        return (
-            "Loading..." if run_hybrid else dash.no_update,
-            "Loading..." if run_mip else dash.no_update,
-            True if run_hybrid else dash.no_update,
-            True if run_mip else dash.no_update,
-            {"display": "none"},
-            {},
-            run_hybrid,
-            run_mip,
-            "input-tab",
+        return UpdateTabLoadingStateReturn(
+            dwave_tab_label="Loading..." if run_hybrid else dash.no_update,
+            mip_tab_label="Loading..." if run_mip else dash.no_update,
+            dwave_tab_disabled=True if run_hybrid else dash.no_update,
+            mip_tab_disabled=True if run_mip else dash.no_update,
+            run_button_style={"display": "none"},
+            cancel_button_style={},
+            running_dwave=run_hybrid,
+            running_classical=run_mip,
+            active_tab="input-tab",
         )
+
     if ctx.triggered_id == "cancel-button" and cancel_click > 0:
-        return (
-            DWAVE_TAB_LABEL,
-            CLASSICAL_TAB_LABEL,
-            dash.no_update,
-            dash.no_update,
-            {},
-            {"display": "none"},
-            False,
-            False,
-            dash.no_update,
-        )
+        return UpdateTabLoadingStateReturn()
+
     raise PreventUpdate
 
 
@@ -208,14 +214,24 @@ def update_button_visibility(running_dwave: bool, running_classical: bool) -> tu
         running_classical: Whether the Classical solver is running.
 
     Returns:
-        dict: Run button style.
-        dict: Cancel button style.
+        run-button-style: Run button style.
+        cancel-button-style: Cancel button style.
     """
     if not running_classical and not running_dwave:
         return {}, {"display": "none"}
 
     return {"display": "none"}, {} 
 
+
+class RunOptimizationCqmReturn(NamedTuple):
+    """Return type for the ``run_optimization_cqm`` callback function."""
+
+    gantt_chart: go.Figure = dash.no_update
+    summary_table: go.Figure = dash.no_update
+    tab_classname: str = ""
+    tab_label: str = DWAVE_TAB_LABEL
+    tab_disabled: bool = dash.no_update
+    running_dwave: bool = False
 
 @dash.callback(
     Output("optimized-gantt-chart", "figure"),
@@ -237,7 +253,7 @@ def update_button_visibility(running_dwave: bool, running_classical: bool) -> tu
 )
 def run_optimization_cqm(
     run_click: int, model: int, solvers: list[int], scenario: str, time_limit: int
-) -> tuple[go.Figure, go.Figure, str, str, bool, bool]:
+) -> RunOptimizationCqmReturn:
     """Runs optimization using the D-Wave hybrid solver.
 
     Args:
@@ -248,18 +264,15 @@ def run_optimization_cqm(
         time_limit: The time limit for the optimization.
 
     Returns:
-        go.Figure: Gantt chart for the D-Wave hybrid solver.
-        go.Figure: Results table for the D-Wave hybrid solver.
-        str: Class name for the D-Wave tab.
-        str: The label for the D-Wave tab.
-        bool: True if D-Wave tab should be disabled, False otherwise.
-        bool: Whether D-Wave solver is running.
+        gantt_chart: Gantt chart for the D-Wave hybrid solver.
+        summary_table: Results table for the D-Wave hybrid solver.
+        tab_classname: Class name for the D-Wave tab.
+        tab_label: The label for the D-Wave tab.
+        tab_disabled: True if D-Wave tab should be disabled, False otherwise.
+        running_dwave: Whether D-Wave solver is running.
     """
-    if ctx.triggered_id != "run-button" or run_click == 0:
-        raise PreventUpdate
-
     if f"{SolverType.HYBRID.value}" not in solvers:
-        return (dash.no_update, dash.no_update, "tab", DWAVE_TAB_LABEL, dash.no_update, False)
+        return RunOptimizationCqmReturn()
 
     start = time.perf_counter()
     model = Model(int(model))
@@ -275,11 +288,23 @@ def run_optimization_cqm(
         solver_time_limit=time_limit,
     )
 
-    fig = generate_gantt_chart(results)
-    table = generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start)
+    return RunOptimizationCqmReturn(
+        gantt_chart=generate_gantt_chart(results),
+        summary_table=generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start),
+        tab_classname="tab-success",
+        tab_disabled=False
+    )
 
-    return (fig, table, "tab-success", DWAVE_TAB_LABEL, False, False)
 
+class RunOptimizationMipReturn(NamedTuple):
+    """Return type for the ``run_optimization_mip`` callback function."""
+
+    gantt_chart: go.Figure = dash.no_update
+    summary_table: go.Figure = dash.no_update
+    tab_classname: str = ""
+    tab_label: str = CLASSICAL_TAB_LABEL
+    tab_disabled: bool = dash.no_update
+    running_classical: bool = False
 
 @dash.callback(
     Output("mip-gantt-chart", "figure"),
@@ -300,7 +325,7 @@ def run_optimization_cqm(
 )
 def run_optimization_mip(
     run_click: int, solvers: list[int], scenario: str, time_limit: int
-) -> tuple[go.Figure, go.Figure, str, str, bool, bool]:
+) -> RunOptimizationMipReturn:
     """Runs optimization using the COIN-OR Branch-and-Cut solver.
 
     Args:
@@ -310,18 +335,15 @@ def run_optimization_mip(
         time_limit: The time limit for the optimization.
 
     Returns:
-        go.Figure: Gantt chart for the Classical solver.
-        go.Figure: Results table for the Classical solver.
-        str: Class name for the Classical tab.
-        str: The label for the Classical tab.
-        bool: True if Classical tab should be disabled, False otherwise.
-        bool: Whether Classical solver is running.
+        gantt_chart: Gantt chart for the Classical solver.
+        summary_table: Results table for the Classical solver.
+        tab_classname: Class name for the Classical tab.
+        tab_label: The label for the Classical tab.
+        tab_disabled: True if Classical tab should be disabled, False otherwise.
+        running_classical: Whether Classical solver is running.
     """
-    if ctx.triggered_id != "run-button" or run_click == 0:
-        raise PreventUpdate
-
     if f"{SolverType.MIP.value}" not in solvers:
-        return (dash.no_update, dash.no_update, "tab", CLASSICAL_TAB_LABEL, dash.no_update, False)
+        return RunOptimizationMipReturn()
 
     start = time.perf_counter()
     model_data = JobShopData()
@@ -337,20 +359,24 @@ def run_optimization_mip(
     )
 
     if results.empty:
-        fig = get_empty_figure("No solution found for Classical solver")
-        table = generate_output_table(0, time_limit, time.perf_counter() - start)
-        return (fig, table, "tab-fail", CLASSICAL_TAB_LABEL, False, False)
+        return RunOptimizationMipReturn(
+            gantt_chart=get_empty_figure("No solution found for Classical solver"),
+            summary_table=generate_output_table(0, time_limit, time.perf_counter() - start),
+            tab_classname="tab-fail",
+            tab_disabled=False
+        )
 
-    fig = generate_gantt_chart(results)
-    mip_table = generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start)
-    return (fig, mip_table, "tab-success", CLASSICAL_TAB_LABEL, False, False)
+    return RunOptimizationMipReturn(
+        gantt_chart=generate_gantt_chart(results),
+        summary_table=generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start),
+        tab_classname="tab-success",
+        tab_disabled=False
+    )
 
 
 @dash.callback(
     Output("unscheduled-gantt-chart", "figure"),
-    [
-        Input("scenario-select", "value"),
-    ],
+    Input("scenario-select", "value"),
 )
 def generate_unscheduled_gantt_chart(scenario: str) -> go.Figure:
     """Generates a Gantt chart of the unscheduled tasks for the given scenario.

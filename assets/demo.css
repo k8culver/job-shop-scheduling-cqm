@@ -31,70 +31,24 @@ limitations under the License.
     display: none !important;
 }
 
-.table-row {
-    height: 63px;
-    vertical-align: middle;
-    font-size: 13px;
-}
-
-.wait_time_graph > div, .patient_score_graph > div {
-    height: 100% !important;
-    width: 100% !important;
-}
-
 .draglayer {
     cursor: pointer !important;
 }
 
-#control-card > p {
-    font-weight: bold;
+.tab-fail:where(:not([data-active])),
+.mantine-Tabs-tab:hover:where(:not([data-active])).tab-fail {
+    border-top-color: var(--red-light);
+    border-style: solid;
 }
 
-#gantt_chart_card, #wait_time_card {
-    background-color: #FFFFFF;
-    padding: 1rem;
-    margin: auto;
-    margin-top: 20px;
+.tab-success:where(:not([data-active])),
+.mantine-Tabs-tab:hover:where(:not([data-active])).tab-success {
+    border-top-color: var(--teal-darker);
+    border-style: solid;
 }
 
-#gantt_chart_card > b, #wait_time_card > b {
-    line-height: 2.5;
-}
-
-#gantt_chart {
-    height: 400px;
-}
-
-.table-row:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-#header_wait_time_min, #header_care_score {
-    display: table;
-}
-
-#header_wait_time_min > b, #header_care_score > b {
-    display: table-cell;
-    vertical-align: middle;
-}
-
-.tab-container {
-    border-bottom: 3px solid var(--theme-secondary);
-    flex-direction: row !important;
-}
-
-.tab-fail {
-    border-top: 3px solid var(--red-light) !important;
-}
-
-.tab-success {
-    border-top: 3px solid var(--teal-darker) !important;
-}
-
-.tab-warning {
-    border-top: 3px solid var(--orange) !important;
-}
-
-#solver-time-limit {
-    margin-bottom: 20px;
+.tab-warning:where(:not([data-active])),
+.mantine-Tabs-tab:hover:where(:not([data-active])).tab-warning {
+    border-top-color: var(--orange);
+    border-style: solid;
 }
