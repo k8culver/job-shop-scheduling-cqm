@@ -1,0 +1,100 @@
+/*
+Copyright 2024 D-Wave
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.tab-content-wrapper {
+    padding: 2rem 2rem 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: calc(100vh - var(--banner-height));
+}
+
+.gantt-title {
+    margin-bottom: 0.5rem;
+    margin-left: 2.75rem;
+}
+
+#solver-select.hide-classic label:last-child {
+    display: none !important;
+}
+
+.table-row {
+    height: 63px;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+.wait_time_graph > div, .patient_score_graph > div {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+.draglayer {
+    cursor: pointer !important;
+}
+
+#control-card > p {
+    font-weight: bold;
+}
+
+#gantt_chart_card, #wait_time_card {
+    background-color: #FFFFFF;
+    padding: 1rem;
+    margin: auto;
+    margin-top: 20px;
+}
+
+#gantt_chart_card > b, #wait_time_card > b {
+    line-height: 2.5;
+}
+
+#gantt_chart {
+    height: 400px;
+}
+
+.table-row:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#header_wait_time_min, #header_care_score {
+    display: table;
+}
+
+#header_wait_time_min > b, #header_care_score > b {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.tab-container {
+    border-bottom: 3px solid var(--theme-secondary);
+    flex-direction: row !important;
+}
+
+.tab-fail {
+    border-top: 3px solid var(--red-light) !important;
+}
+
+.tab-success {
+    border-top: 3px solid var(--teal-darker) !important;
+}
+
+.tab-warning {
+    border-top: 3px solid var(--orange) !important;
+}
+
+#solver-time-limit {
+    margin-bottom: 20px;
+}

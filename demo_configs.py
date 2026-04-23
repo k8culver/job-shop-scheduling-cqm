@@ -16,20 +16,9 @@
 
 import json
 
-# Sets Dash debug which hides and shows Dash debug menu.
-# Set to True if developing and False if demoing.
-# App should be restarted to see change.
-DEBUG = False
+THUMBNAIL = "static/dwave_logo.svg"
 
-# THEME_COLOR is used for the button, text, and banner and should be dark
-# and pass accessibility checks with white: https://webaim.org/resources/contrastchecker/
-# THEME_COLOR_SECONDARY can be light or dark and is used for sliders, loading icon, and tabs
-THEME_COLOR = "#074C91"  # D-Wave dark blue default #074C91
-THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
-
-THUMBNAIL = "assets/dwave_logo.svg"
-
-APP_TITLE = "JSS Demo"
+APP_TITLE = "Job Shop Scheduling"
 MAIN_HEADER = "Job Shop Scheduling"
 DESCRIPTION = """\
 Run the job shop scheduling problem for several different scenarios.

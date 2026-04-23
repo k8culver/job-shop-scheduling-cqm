@@ -5,7 +5,7 @@
   https://circleci.com/gh/dwave-examples/job-shop-scheduling-cqm.svg?style=shield)](
   https://circleci.com/gh/dwave-examples/job-shop-scheduling-cqm)
 
-# Job Shop Scheduling using CQM
+# Job Shop Scheduling
 
 [Job shop scheduling](https://en.wikipedia.org/wiki/Job-shop_scheduling) is an
 optimization problem where the goal is to schedule jobs on a certain number of
@@ -21,30 +21,24 @@ scheduler as well as a user interface built with
 [Dash](https://dash.plotly.com/).
 
 ## Installation
+You can run this example without installation in cloud-based IDEs that support the
+[Development Containers Specification](https://containers.dev/supporting) (aka "devcontainers")
+such as GitHub Codespaces.
 
-You can run this example without installation in cloud-based IDEs that support
-the
-[Development Containers specification](https://containers.dev/supporting) (aka
-"devcontainers") such as GitHub Codespaces.
-
-For development environments that do not support `devcontainers`, install
-requirements:
+For development environments that do not support `devcontainers`, install requirements:
 
 ```bash
 pip install -r requirements.txt
 ```
 
 If you are cloning the repo to your local system, working in a
-[virtual environment](https://docs.python.org/3/library/venv.html) is
-recommended.
+[virtual environment](https://docs.python.org/3/library/venv.html) is recommended.
 
 ## Usage
-
 Your development environment should be configured to access the
 [Leap&trade; quantum cloud service](https://docs.dwavequantum.com/en/latest/ocean/sapi_access_basic.html).
-You can see information about supported IDEs and authorizing access to your Leap
-account
-[here](https://docs.dwavequantum.com/en/latest/leap_sapi/dev_env.html).
+You can see information about supported IDEs and authorizing access to your Leap account
+[here](https://docs.dwavequantum.com/en/latest/ocean/leap_authorization.html).
 
 Run the following terminal command to start the Dash application:
 
@@ -54,7 +48,17 @@ python app.py
 
 Access the user interface with your browser at http://127.0.0.1:8050/.
 
-To run the stand-alone job shop demo (without the user interace), use the
+The demo program opens an interface where you can configure problems and submit these problems to
+a solver.
+
+Configuration options can be found in the [demo_configs.py](demo_configs.py) file.
+
+> [!NOTE]\
+> If you plan on editing any files while the application is running, please run the application
+with the `--debug` command-line argument for live reloads and easier debugging:
+`python app.py --debug`
+
+To run the stand-alone job shop demo (without the user interface), use the
 command:
 
     python job_shop_scheduler.py [-h] [-i INSTANCE] [-tl TIME_LIMIT] [-os OUTPUT_SOLUTION] [-op OUTPUT_PLOT] [-m] [-v] [-q] [-p PROFILE] [-mm MAX_MAKESPAN]
@@ -76,7 +80,7 @@ Command line arguments are defined as:
 -   -q (--allow_quad): Whether to allow quadratic constraints (default: False)
 -   -p (--profile): The profile variable to pass to the Sampler. Defaults to
     None. (default: None)
--   -mm (--max_makespan): Upperbound on how long the schedule can be; leave
+-   -mm (--max_makespan): Upper bound on how long the schedule can be; leave
     empty to auto-calculate an appropriate value. (default: None)
 
 There are several instances pre-populated under `input` folder. Some of the
@@ -197,7 +201,7 @@ addition, using this quadratic equation eliminates the need for using the so
 called `Big M` value to activate or relax constraint
 (https://en.wikipedia.org/wiki/Big_M_method).
 
-The proposed quadratic equation fulfills the same behaviour as the linear
+The proposed quadratic equation fulfills the same behavior as the linear
 constraints:
 
 There are two cases:
