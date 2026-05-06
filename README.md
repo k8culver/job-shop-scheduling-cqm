@@ -7,11 +7,10 @@
 
 # Job Shop Scheduling
 
-[Job shop scheduling](https://en.wikipedia.org/wiki/Job-shop_scheduling) is an
-optimization problem where the goal is to schedule jobs on a certain number of
-machines according to a process order for each job. The objective is to minimize
-the length of schedule also called make-span, or completion time of the last
-task of all jobs.
+Job shop scheduling (JSS)
+is an optimization problem with the goal of scheduling jobs on a variety of machines,
+where jobs are processed on machines in different orders. The objective is to
+minimize the time it takes to complete all jobs, also known as the "makespan".
 
 This example demonstrates a means of formulating and optimizing job shop
 scheduling (JSS) using a
@@ -19,6 +18,10 @@ scheduling (JSS) using a
 CQM solver. Contained in this example is the code for running the job shop
 scheduler as well as a user interface built with
 [Dash](https://dash.plotly.com/).
+
+
+![Demo Screenshot](static/demo.png "Image of demo interface")
+![Demo Screenshot](static/demo_solution.png "Image of demo interface with solution")
 
 ## Installation
 You can run this example without installation in cloud-based IDEs that support the
@@ -48,27 +51,26 @@ python app.py
 
 Access the user interface with your browser at http://127.0.0.1:8050/.
 
-The demo program opens an interface where you can configure problems and submit these problems to
-a solver.
+The demo program opens an interface where you can configure and submit problems to a solver.
 
 Configuration options can be found in the [demo_configs.py](demo_configs.py) file.
 
 > [!NOTE]\
 > If you plan on editing any files while the application is running, please run the application
-with the `--debug` command-line argument for live reloads and easier debugging:
+with the `--debug` command-line argument for easier debugging:
 `python app.py --debug`
 
-To run the stand-alone job shop demo (without the user interface), use the
+Alternatively, you can run the job shop scheduler without the Dash interface using the following
 command:
 
-    python job_shop_scheduler.py [-h] [-i INSTANCE] [-tl TIME_LIMIT] [-os OUTPUT_SOLUTION] [-op OUTPUT_PLOT] [-m] [-v] [-q] [-p PROFILE] [-mm MAX_MAKESPAN]
+```bash
+python job_shop_scheduler.py [-h] [-i INSTANCE] [-tl TIME_LIMIT] [-os OUTPUT_SOLUTION] [-op OUTPUT_PLOT] [-m] [-v] [-q] [-p PROFILE] [-mm MAX_MAKESPAN]
+```
 
-This will call the job shop scheduling algorithm for the input instance file.
-Command line arguments are defined as:
-
+The command line arguments are as follows:
 -   -h (or --help): show this help message and exit
--   -i (--instance): path to the input instance file;
-    (default: input/instance5_5.txt)
+-   -i (--instance): path to the input instance file (default: input/instance5_5.txt);
+  see `app_configs.py` for instance names
 -   -tl (--time_limit) time limit in seconds (default: None)
 -   -os (--output_solution): path to the output solution file
     (default: output/solution.txt)
@@ -130,7 +132,7 @@ The program produces a solution schedule like this:
 
 The following graphic is an illustration of this solution.
 
-![Example Solution](_static/schedule.png)
+![Example Solution](_static/schedule.png "Example solution schedule")
 
 ### Generating Problem Instances
 
@@ -144,9 +146,9 @@ To see a full description of the options, type:
 
 `python utils/jss_generator.py -h`
 
-## Model and Code Overview
+## Model Overview
 
-### Problem Parameters
+### Parameters
 
 These are the parameters of the problem:
 
@@ -158,12 +160,12 @@ These are the parameters of the problem:
 -   `M_(j,t)`:  is the machine that processes task `t` of job `j`
 -   `T_(j,i)`  : is the task that is processed by machine `i` for job `j`
 -   `D_(j,t)`:  is the processing duration that task `t` needs for job `j`
--   `V`:  maximum possible make-span
+-   `V`:  maximum possible makespan
 
 ### Variables
 
 -   `w` is a positive integer variable that defines the completion time
-    (make-span) of the JSS
+    (makespan) of the JSS
 -   `x_(j_i)` are positive integer variables used to model start of each job `j`
     on machine `i`
 -   `y_(j_k,i)` are binaries which define if job `k` precedes job `j` on machine
@@ -171,7 +173,7 @@ These are the parameters of the problem:
 
 ### Objective
 
-Our objective is to minimize the make-span (`w`) of the given JSS problem.
+Our objective is to minimize the makespan (`w`) of the given JSS problem.
 
 ### Constraints
 
@@ -180,7 +182,7 @@ Our objective is to minimize the make-span (`w`) of the given JSS problem.
 Our first constraint, [equation 1](#eq2), enforces the precedence constraint.
 This ensures that all tasks of a job are executed in the given order.
 
-![equation1](_static/eq1.png)          (1)
+![equation1](_static/eq1.png "Equation ensuring that all tasks are executed in order")          (1)
 
 This constraint ensures that a task for a given job, `j`, on a machine,
 `M_(j,t)`, starts when the previous task is finished. As an example, for
@@ -192,7 +194,7 @@ assuming that task 4 takes 12 hours to finish, we add this constraint:
 
 Our second constraint, [equation 2](#eq2), ensures that multiple jobs don't use
 any machine at the same time.
-![eq2](_static/eq2.png)          (2)
+![eq2](_static/eq2.png "Equation ensuring that multiple jobs don't use the same machine at the same time")          (2)
 
 Usually this constraint is modeled as two disjunctive linear constraints
 ([Ku et al. 2016](#Ku) and [Manne et al. 1960](#Manne)); however, it is more
@@ -208,16 +210,16 @@ There are two cases:
 
 -   if `y_j,k,i = 0` job `j` is processed after job `k`:
 
-    ![equation2_1](_static/eq2_1.png)
+    ![equation2_1](_static/eq2_1.png "Equation simplifying above equation preventing two jobs on the same machine at the same time")
 -   if `y_j,k,i = 1` job `k` is processed after job `j`:
 
-    ![equation2_2](_static/eq2_2.png)
+    ![equation2_2](_static/eq2_2.png "Equation simplifying above equation preventing two jobs on the same machine at the same time")
 
     Since these equations are applied to every pair of jobs, they guarantee that
     the jobs don't overlap on a machine. If -allow_quad is set to False, this
     mixed integer formulation of this constraint will be used.
 
-#### Make-Span Constraint
+#### Makespan Constraint
 
 In this demonstration, the maximum makespan can be defined by the user or it
 will be determined using a greedy heuristic. Placing an upper bound on the

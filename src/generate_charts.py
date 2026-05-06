@@ -143,13 +143,13 @@ def generate_gantt_chart(
     return fig
 
 
-def generate_output_table(make_span: int, solver_time_limit: int, total_time: int) -> go.Figure:
+def generate_output_table(makespan: int, solver_time_limit: int, total_time: int) -> go.Figure:
     """Generates an output table for the optimization results.
-    The table will contain the make-span, solver time limit, and total time
+    The table will contain the makespan, solver time limit, and total time
     for the optimization.
 
     Args:
-        make_span (int): The make-span for the optimization.
+        makespan (int): The makespan for the optimization.
         solver_time_limit (int): The solver time limit for the optimization.
         total_time (int): The total time for the optimization.
 
@@ -159,8 +159,8 @@ def generate_output_table(make_span: int, solver_time_limit: int, total_time: in
     fig = go.Figure(
         data=[
             go.Table(
-                header=dict(values=["Make-span", "Solver Time Limit", "Total Time"]),
-                cells=dict(values=[[make_span], [f"{solver_time_limit}s"], [f"{total_time:.2f}s"]]),
+                header=dict(values=["Makespan", "Solver Time Limit", "Total Time"]),
+                cells=dict(values=[[makespan], [f"{solver_time_limit}s"], [f"{total_time:.2f}s"]]),
             )
         ]
     )

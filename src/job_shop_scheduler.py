@@ -386,7 +386,7 @@ def run_shop_scheduler(
                 [
                     [
                         "Completion Time",
-                        "Max Make-Span",
+                        "Max Makespan",
                         "Model Building Time (s)",
                         "Solver Call Time (s)",
                         "Total Runtime (s)",
