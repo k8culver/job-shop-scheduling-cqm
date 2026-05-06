@@ -91,9 +91,7 @@ def get_empty_figure(message: str) -> go.Figure:
     return fig
 
 
-def generate_gantt_chart(
-    df: pd.DataFrame = None
-) -> go.Figure:
+def generate_gantt_chart(df: pd.DataFrame = None) -> go.Figure:
     """Generates a Gantt chart of the unscheduled tasks for the given scenario.
 
     Args:
@@ -130,7 +128,8 @@ def generate_gantt_chart(
     for index, data in enumerate(fig.data):
         resource = data.name
         fig.data[index].x = [
-            df[(df[Y_AXIS_LABEL] == job) & (df[COLOR_LABEL] == resource)].delta.tolist()[0] for job in data.y
+            df[(df[Y_AXIS_LABEL] == job) & (df[COLOR_LABEL] == resource)].delta.tolist()[0]
+            for job in data.y
         ]
 
     fig.layout.xaxis.type = "linear"

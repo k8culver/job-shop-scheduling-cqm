@@ -17,21 +17,14 @@ import time
 from typing import NamedTuple
 
 import dash
-from dash import MATCH
-from src.demo_enums import Model, SolverType
 import plotly.graph_objs as go
-from dash import ctx
+from dash import MATCH, ctx
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-
-from demo_configs import (
-    CLASSICAL_TAB_LABEL,
-    DWAVE_TAB_LABEL,
-    RESOURCE_NAMES,
-    SCENARIOS,
-)
-from src.generate_charts import generate_gantt_chart, generate_output_table, get_empty_figure, get_minimum_task_times
+from demo_configs import CLASSICAL_TAB_LABEL, DWAVE_TAB_LABEL, RESOURCE_NAMES
+from src.demo_enums import Model, SolverType
+from src.generate_charts import generate_gantt_chart, get_empty_figure, get_minimum_task_times
 from src.job_shop_scheduler import run_shop_scheduler
 from src.model_data import JobShopData
 
@@ -118,6 +111,7 @@ class UpdateTabLoadingStateReturn(NamedTuple):
     running_dwave: bool = False
     running_classical: bool = False
     active_tab: str = dash.no_update
+
 
 @dash.callback(
     Output("dwave-tab", "children", allow_duplicate=True),
@@ -209,7 +203,7 @@ def update_button_visibility(running_dwave: bool, running_classical: bool) -> tu
     if not running_classical and not running_dwave:
         return {}, {"display": "none"}
 
-    return {"display": "none"}, {} 
+    return {"display": "none"}, {}
 
 
 class RunOptimizationCqmReturn(NamedTuple):
@@ -221,6 +215,7 @@ class RunOptimizationCqmReturn(NamedTuple):
     tab_label: str = DWAVE_TAB_LABEL
     tab_disabled: bool = dash.no_update
     running_dwave: bool = False
+
 
 @dash.callback(
     Output("dwave-gantt-chart", "figure"),
@@ -282,7 +277,7 @@ def run_optimization_cqm(
         gantt_chart=generate_gantt_chart(results),
         makespan=results["Finish"].max(),
         tab_classname="tab-success",
-        tab_disabled=False
+        tab_disabled=False,
     )
 
 
@@ -295,6 +290,7 @@ class RunOptimizationMipReturn(NamedTuple):
     tab_label: str = CLASSICAL_TAB_LABEL
     tab_disabled: bool = dash.no_update
     running_classical: bool = False
+
 
 @dash.callback(
     Output("mip-gantt-chart", "figure"),
@@ -354,14 +350,14 @@ def run_optimization_mip(
         return RunOptimizationMipReturn(
             gantt_chart=get_empty_figure("No solution found for Classical solver"),
             tab_classname="tab-fail",
-            tab_disabled=False
+            tab_disabled=False,
         )
 
     return RunOptimizationMipReturn(
         gantt_chart=generate_gantt_chart(results),
         makespan=results["Finish"].max(),
         tab_classname="tab-success",
-        tab_disabled=False
+        tab_disabled=False,
     )
 
 

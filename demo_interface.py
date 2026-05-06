@@ -13,8 +13,10 @@
 # limitations under the License.
 
 from __future__ import annotations
+
 from enum import EnumMeta
 
+import dash_mantine_components as dmc
 from dash import dcc, html
 
 from demo_configs import (
@@ -24,11 +26,9 @@ from demo_configs import (
     MAIN_HEADER,
     SCENARIOS,
     SOLVER_TIME,
-    THUMBNAIL
+    THUMBNAIL,
 )
 from src.demo_enums import Model, SolverType
-import dash_mantine_components as dmc
-
 
 THEME_COLOR = "#2d4376"
 
@@ -54,6 +54,7 @@ def dropdown(label: str, id: str, options: list) -> html.Div:
         ],
     )
 
+
 def checklist(label: str, id: str, options: list, values: list, inline: bool = True) -> html.Div:
     """Checklist element for option selection.
 
@@ -74,7 +75,9 @@ def checklist(label: str, id: str, options: list, values: list, inline: bool = T
                 value=values,
                 children=dmc.Group(
                     [
-                        dmc.Checkbox(label=option["label"], value=option["value"], color=THEME_COLOR)
+                        dmc.Checkbox(
+                            label=option["label"], value=option["value"], color=THEME_COLOR
+                        )
                         for option in options
                     ],
                 ),
@@ -82,7 +85,8 @@ def checklist(label: str, id: str, options: list, values: list, inline: bool = T
         ],
     )
 
-def input(label: str, id: str, configs: dict, type: str="number") -> html.Div:
+
+def input(label: str, id: str, configs: dict, type: str = "number") -> html.Div:
     """Input element for either text or number input.
 
     Args:
@@ -95,12 +99,16 @@ def input(label: str, id: str, configs: dict, type: str="number") -> html.Div:
         className="input-wrapper",
         children=[
             html.Label(label, htmlFor=id),
-            dmc.TextInput(
-                id=id,
-                **configs,
-            ) if type == "text" else dmc.NumberInput(
-                id=id,
-                **configs,
+            (
+                dmc.TextInput(
+                    id=id,
+                    **configs,
+                )
+                if type == "text"
+                else dmc.NumberInput(
+                    id=id,
+                    **configs,
+                )
             ),
         ],
     )
@@ -316,7 +324,7 @@ def create_interface():
                             ),
                         ],
                     ),
-                                        # Right column
+                    # Right column
                     html.Div(
                         className="right-column",
                         children=[
@@ -380,7 +388,7 @@ def create_interface():
                                                                 config={"displayModeBar": False},
                                                             ),
                                                         ],
-                                                    )
+                                                    ),
                                                 ],
                                             ),
                                         ],
