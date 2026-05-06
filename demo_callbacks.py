@@ -1,34 +1,16 @@
-"""
-This file is forked from apps/dash-clinical-analytics/app.py under the following license
-
-MIT License
-
-Copyright (c) 2019 Plotly
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Modifications are licensed under
-
-Apache License, Version 2.0
-(see ./LICENSE for details)
-
-"""
+# Copyright 2026 D-Wave
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import pathlib
 import time
@@ -75,8 +57,10 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[s
             visible, empty string if visible.
 
     Returns:
-        str: The new class name of the thing to collapse.
-        str: The aria-expanded value.
+        A tuple containing:
+
+        - str: The new class name of the thing to collapse.
+        - str: The aria-expanded value.
     """
 
     classes = to_collapse_class.split(" ") if to_collapse_class else []
@@ -87,7 +71,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[s
 
 
 @dash.callback(
-    Output("solver-select", "className"),
+    Output("solver-select", "disabled"),
     Output("solver-select", "value"),
     Output("last-selected-solvers", "data"),
     inputs=[
@@ -99,7 +83,7 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> tuple[s
 )
 def update_solver_options(
     model: int, selected_solvers: list[int], last_selected_solvers: list[int]
-) -> tuple[str, list[int], list[int]]:
+) -> tuple[bool, list[int], list[int]]:
     """Hides and shows classical solver option using 'hide-classic' class.
 
     Args:
@@ -108,17 +92,18 @@ def update_solver_options(
         last_selected_solvers: Previously selected solvers.
 
     Returns:
-        solver-select-className: The new class name of the solver-select checklist.
-        solver-select-value: Unselects MIP and selects Hybrid or updates to previously selected
-            solvers.
-        last-selected-solvers: Updates last_selected_solvers with the list of solvers that were
-            selected before updating.
+        A tuple containing:
+
+        - bool: Whether the solver-select checklist should be disabled.
+        - list[int]: Unselects MIP and selects Hybrid or updates to previously selected solvers.
+        - list[int]: Updates last_selected_solvers with the list of solvers that were selected
+        before updating.
     """
     model = Model(int(model))
 
     if model is Model.QM:
-        return "hide-classic", [SolverType.HYBRID.value], selected_solvers
-    return "", last_selected_solvers, dash.no_update
+        return True, [f"{SolverType.HYBRID.value}"], selected_solvers
+    return False, last_selected_solvers, dash.no_update
 
 
 class UpdateTabLoadingStateReturn(NamedTuple):
@@ -163,15 +148,17 @@ def update_tab_loading_state(
         solvers: The list of selected solvers.
 
     Returns:
-        dwave_tab_label: The label for the D-Wave tab.
-        mip_tab_label: The label for the Classical tab.
-        dwave_tab_disabled: True if D-Wave tab should be disabled, False otherwise.
-        mip_tab_disabled: True if Classical tab should be disabled, False otherwise.
-        run_button_style: Style for the run button.
-        cancel_button_style: Style for the cancel button.
-        running_dwave: Whether Hybrid is running.
-        running_classical: Whether MIP is running.
-        active_tab: The value of the tab that should be active.
+        A NamedTuple, UpdateTabLoadingStateReturn, containing:
+
+        - dwave_tab_label: The label for the D-Wave tab.
+        - mip_tab_label: The label for the Classical tab.
+        - dwave_tab_disabled: True if D-Wave tab should be disabled, False otherwise.
+        - mip_tab_disabled: True if Classical tab should be disabled, False otherwise.
+        - run_button_style: Style for the run button.
+        - cancel_button_style: Style for the cancel button.
+        - running_dwave: Whether Hybrid is running.
+        - running_classical: Whether MIP is running.
+        - active_tab: The value of the tab that should be active.
     """
 
     if ctx.triggered_id == "run-button" and run_click > 0:
@@ -214,8 +201,10 @@ def update_button_visibility(running_dwave: bool, running_classical: bool) -> tu
         running_classical: Whether the Classical solver is running.
 
     Returns:
-        run-button-style: Run button style.
-        cancel-button-style: Cancel button style.
+        A tuple containing:
+
+        - dict: Run button style.
+        - dict: Cancel button style.
     """
     if not running_classical and not running_dwave:
         return {}, {"display": "none"}
@@ -227,15 +216,15 @@ class RunOptimizationCqmReturn(NamedTuple):
     """Return type for the ``run_optimization_cqm`` callback function."""
 
     gantt_chart: go.Figure = dash.no_update
-    summary_table: go.Figure = dash.no_update
+    makespan: int = 0
     tab_classname: str = ""
     tab_label: str = DWAVE_TAB_LABEL
     tab_disabled: bool = dash.no_update
     running_dwave: bool = False
 
 @dash.callback(
-    Output("optimized-gantt-chart", "figure"),
-    Output("dwave-summary-table", "figure"),
+    Output("dwave-gantt-chart", "figure"),
+    Output("dwave-makespan", "children"),
     Output("dwave-tab", "className"),
     Output("dwave-tab", "children"),
     Output("dwave-tab", "disabled"),
@@ -264,12 +253,14 @@ def run_optimization_cqm(
         time_limit: The time limit for the optimization.
 
     Returns:
-        gantt_chart: Gantt chart for the D-Wave hybrid solver.
-        summary_table: Results table for the D-Wave hybrid solver.
-        tab_classname: Class name for the D-Wave tab.
-        tab_label: The label for the D-Wave tab.
-        tab_disabled: True if D-Wave tab should be disabled, False otherwise.
-        running_dwave: Whether D-Wave solver is running.
+        A NamedTuple, RunOptimizationCqmReturn, containing:
+
+        - gantt_chart: Gantt chart for the D-Wave hybrid solver.
+        - makespan: Makespan for the D-Wave hybrid solver.
+        - tab_classname: Class name for the D-Wave tab.
+        - tab_label: The label for the D-Wave tab.
+        - tab_disabled: True if D-Wave tab should be disabled, False otherwise.
+        - running_dwave: Whether D-Wave solver is running.
     """
     if f"{SolverType.HYBRID.value}" not in solvers:
         return RunOptimizationCqmReturn()
@@ -277,9 +268,8 @@ def run_optimization_cqm(
     start = time.perf_counter()
     model = Model(int(model))
     model_data = JobShopData()
-    filename = SCENARIOS[scenario]
 
-    model_data.load_from_file(DATA_PATH.joinpath(filename), resource_names=RESOURCE_NAMES)
+    model_data.load_from_file(DATA_PATH.joinpath(scenario), resource_names=RESOURCE_NAMES)
 
     results = run_shop_scheduler(
         model_data,
@@ -290,7 +280,7 @@ def run_optimization_cqm(
 
     return RunOptimizationCqmReturn(
         gantt_chart=generate_gantt_chart(results),
-        summary_table=generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start),
+        makespan=results["Finish"].max(),
         tab_classname="tab-success",
         tab_disabled=False
     )
@@ -300,7 +290,7 @@ class RunOptimizationMipReturn(NamedTuple):
     """Return type for the ``run_optimization_mip`` callback function."""
 
     gantt_chart: go.Figure = dash.no_update
-    summary_table: go.Figure = dash.no_update
+    makespan: int = 0
     tab_classname: str = ""
     tab_label: str = CLASSICAL_TAB_LABEL
     tab_disabled: bool = dash.no_update
@@ -308,7 +298,7 @@ class RunOptimizationMipReturn(NamedTuple):
 
 @dash.callback(
     Output("mip-gantt-chart", "figure"),
-    Output("mip-summary-table", "figure"),
+    Output("mip-makespan", "children"),
     Output("mip-tab", "className"),
     Output("mip-tab", "children"),
     Output("mip-tab", "disabled"),
@@ -335,19 +325,21 @@ def run_optimization_mip(
         time_limit: The time limit for the optimization.
 
     Returns:
-        gantt_chart: Gantt chart for the Classical solver.
-        summary_table: Results table for the Classical solver.
-        tab_classname: Class name for the Classical tab.
-        tab_label: The label for the Classical tab.
-        tab_disabled: True if Classical tab should be disabled, False otherwise.
-        running_classical: Whether Classical solver is running.
+        A NamedTuple, RunOptimizationMipReturn, containing:
+
+        - gantt_chart: Gantt chart for the Classical solver.
+        - makespan: Makespan for the Classical solver.
+        - tab_classname: Class name for the Classical tab.
+        - tab_label: The label for the Classical tab.
+        - tab_disabled: True if Classical tab should be disabled, False otherwise.
+        - running_classical: Whether Classical solver is running.
     """
     if f"{SolverType.MIP.value}" not in solvers:
         return RunOptimizationMipReturn()
 
     start = time.perf_counter()
     model_data = JobShopData()
-    filename = SCENARIOS[scenario]
+    filename = scenario
 
     model_data.load_from_file(DATA_PATH.joinpath(filename), resource_names=RESOURCE_NAMES)
 
@@ -361,14 +353,13 @@ def run_optimization_mip(
     if results.empty:
         return RunOptimizationMipReturn(
             gantt_chart=get_empty_figure("No solution found for Classical solver"),
-            summary_table=generate_output_table(0, time_limit, time.perf_counter() - start),
             tab_classname="tab-fail",
             tab_disabled=False
         )
 
     return RunOptimizationMipReturn(
         gantt_chart=generate_gantt_chart(results),
-        summary_table=generate_output_table(results["Finish"].max(), time_limit, time.perf_counter() - start),
+        makespan=results["Finish"].max(),
         tab_classname="tab-success",
         tab_disabled=False
     )
@@ -385,10 +376,10 @@ def generate_unscheduled_gantt_chart(scenario: str) -> go.Figure:
         scenario: The name of the scenario; must be a key in SCENARIOS.
 
     Returns:
-        go.Figure: A Plotly figure object with the input data
+        A Plotly figure object with the input data.
     """
     model_data = JobShopData()
-    model_data.load_from_file(DATA_PATH.joinpath(SCENARIOS[scenario]), resource_names=RESOURCE_NAMES)
+    model_data.load_from_file(DATA_PATH.joinpath(scenario), resource_names=RESOURCE_NAMES)
     df = get_minimum_task_times(model_data)
     fig = generate_gantt_chart(df)
     return fig

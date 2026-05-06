@@ -1,34 +1,16 @@
-"""
-This file is forked from apps/dash-clinical-analytics/app.py under the following license
-
-MIT License
-
-Copyright (c) 2019 Plotly
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Modifications are licensed under
-
-Apache License, Version 2.0
-(see ./LICENSE for details)
-
-"""
+# Copyright 2026 D-Wave
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from __future__ import annotations
 from enum import EnumMeta
@@ -100,40 +82,53 @@ def checklist(label: str, id: str, options: list, values: list, inline: bool = T
         ],
     )
 
+def input(label: str, id: str, configs: dict, type: str="number") -> html.Div:
+    """Input element for either text or number input.
 
-# def generate_graph(visible: bool, type: str, index: int) -> html.Div:
-#     """Generates graph either hidden or visible."""
-#     return html.Div(
-#         id={
-#             "type": f"gantt-chart-{'visible' if visible else 'hidden'}-wrapper",
-#             "index": index,
-#         },
-#         className="graph" if visible else "display-none",
-#         children=[
-#             dcc.Graph(
-#                 id={"type": f"gantt-chart-{type}", "index": index},
-#                 responsive=True,
-#                 config={"displayModeBar": False},
-#             ),
-#         ],
-#     )
+    Args:
+        label: The title that goes above the input.
+        id: A unique selector for this element.
+        configs: A dictionary of configurations for the input element.
+        type: The type of input, either "number" or "text".
+    """
+    return html.Div(
+        className="input-wrapper",
+        children=[
+            html.Label(label, htmlFor=id),
+            dmc.TextInput(
+                id=id,
+                **configs,
+            ) if type == "text" else dmc.NumberInput(
+                id=id,
+                **configs,
+            ),
+        ],
+    )
 
 
-def generate_options(options: list | EnumMeta) -> list[dict]:
-    """Generates options for dropdowns, checklists, radios, etc."""
+def generate_options(options: list | EnumMeta | dict) -> list[dict]:
+    """Format options for dropdowns, checklists, radios, etc.
+
+    Args:
+        options: A list, EnumMeta, or dictionary of options to format.
+
+    Returns:
+        A list of dictionaries with "label" and "value" keys for each option.
+    """
     if isinstance(options, EnumMeta):
-        return [
-            {"label": option.label, "value": f"{option.value}"} for option in options
-        ]
+        return [{"label": option.label, "value": f"{option.value}"} for option in options]
+
+    if isinstance(options, dict):
+        return [{"label": f"{key}", "value": f"{value}"} for key, value in options.items()]
 
     return [{"label": f"{option}", "value": f"{option}"} for option in options]
 
 
 def generate_settings_form() -> html.Div:
-    """This function generates settings for selecting the scenario, model, and solver.
+    """Generate settings for selecting the scenario, model, and solver.
 
     Returns:
-        html.Div: A Div containing the settings for selecting the scenario, model, and solver.
+        A Div containing the settings for selecting the scenario, model, and solver.
     """
 
     scenario_options = generate_options(SCENARIOS)
@@ -157,14 +152,13 @@ def generate_settings_form() -> html.Div:
                 "Solver",
                 "solver-select",
                 solver_options,
-                values=[solver_options[0]["value"]],
+                values=[option["value"] for option in solver_options],
                 inline=False,
             ),
-            html.Label("Solver Time Limit (seconds)", htmlFor="solver-time-limit"),
-            dmc.NumberInput(
-                id="solver-time-limit",
-                type="number",
-                **SOLVER_TIME,
+            input(
+                "Solver Time Limit (seconds)",
+                "solver-time-limit",
+                SOLVER_TIME,
             ),
         ],
     )
@@ -186,8 +180,70 @@ def generate_run_buttons() -> html.Div:
     )
 
 
+def generate_graph(graph: str) -> html.Div:
+    """Generates graph."""
+    return html.Div(
+        className="graph",
+        children=[
+            dcc.Graph(
+                id=f"{graph}-gantt-chart",
+                responsive=True,
+                config={"displayModeBar": False},
+            ),
+        ],
+    )
+
+
+def generate_solution_tab(title: str, tab: str, index: int) -> dmc.TabsPanel:
+    """Generates solution tab containing, solution graphs, sort functionality, and
+    problem details dropdown.
+
+    Returns:
+        dmc.TabsPanel: A Tab containing the solution graph and problem details.
+    """
+    return dmc.TabsPanel(
+        value=f"{tab}-tab",
+        tabIndex=11 + index,
+        children=[
+            html.Div(
+                className="solution-card",
+                children=[
+                    html.Div(
+                        className="gantt-chart-card",
+                        children=[
+                            html.Div(
+                                className="gantt-heading",
+                                children=[
+                                    html.Div(
+                                        [
+                                            html.H2(
+                                                title,
+                                                className="gantt-title",
+                                            ),
+                                            html.H4(
+                                                ["Makespan: ", html.Span(id=f"{tab}-makespan")],
+                                                className="makespan",
+                                            ),
+                                        ]
+                                    ),
+                                ],
+                            ),
+                            html.Div(
+                                className="graph-wrapper",
+                                children=[
+                                    generate_graph(tab),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 def create_interface():
-    """Set the application HTML."""
+    """Create the main application interface."""
     return html.Div(
         id="app-container",
         children=[
@@ -301,93 +357,36 @@ def create_interface():
                                         tabIndex="12",
                                         children=[
                                             html.Div(
-                                                className="tab-content-wrapper",
+                                                className="gantt-chart-card",
                                                 children=[
-                                                    html.Div([
-                                                        html.H2(
-                                                            "Unscheduled Jobs and Resources",
-                                                            className="gantt-title",
-                                                        ),
-                                                        dcc.Loading(
-                                                            parent_className="graph-wrapper",
-                                                            type="circle",
-                                                            delay_show=300,
-                                                            color=THEME_COLOR,
-                                                            children=[
-                                                                dcc.Graph(
-                                                                    id="unscheduled-gantt-chart",
-                                                                    responsive=True,
-                                                                    config={"displayModeBar": False},
-                                                                ),
-                                                            ],
-                                                        )
-                                                    ])
-                                                    
-                                                ]
-                                            )
-                                        ],
-                                    ),
-                                    dmc.TabsPanel(
-                                        value="dwave-tab",
-                                        tabIndex="13",
-                                        children=[
-                                            html.Div(
-                                                className="tab-content-wrapper",
-                                                children=[
-                                                    html.Div([
-                                                        html.H2(
-                                                            "D-Wave Hybrid Solver",
-                                                            className="gantt-title",
-                                                        ),
-                                                        dcc.Loading(
-                                                            parent_className="graph-wrapper",
-                                                            type="circle",
-                                                            delay_show=300,
-                                                            color=THEME_COLOR,
-                                                            children=[
-                                                                dcc.Graph(
-                                                                    id="optimized-gantt-chart",
-                                                                    responsive=True,
-                                                                    config={"displayModeBar": False},
-                                                                ),
-                                                            ]
-                                                        )
-                                                    ]),
-                                                    dcc.Graph(id="dwave-summary-table"),
+                                                    html.Div(
+                                                        className="gantt-heading",
+                                                        children=[
+                                                            html.H2(
+                                                                "Unscheduled Jobs and Resources",
+                                                                className="gantt-title",
+                                                            ),
+                                                        ],
+                                                    ),
+                                                    dcc.Loading(
+                                                        parent_className="graph-wrapper",
+                                                        type="circle",
+                                                        delay_show=300,
+                                                        color=THEME_COLOR,
+                                                        children=[
+                                                            dcc.Graph(
+                                                                id="unscheduled-gantt-chart",
+                                                                responsive=True,
+                                                                config={"displayModeBar": False},
+                                                            ),
+                                                        ],
+                                                    )
                                                 ],
-                                            )
+                                            ),
                                         ],
                                     ),
-                                    dmc.TabsPanel(
-                                        value="mip-tab",
-                                        tabIndex="13",
-                                        children=[
-                                            html.Div(
-                                                className="tab-content-wrapper",
-                                                children=[
-                                                    html.Div([
-                                                        html.H2(
-                                                            "Classical Solver (COIN-OR Branch-and-Cut)",
-                                                            className="gantt-title",
-                                                        ),
-                                                        dcc.Loading(
-                                                            parent_className="graph-wrapper",
-                                                            type="circle",
-                                                            delay_show=300,
-                                                            color=THEME_COLOR,
-                                                            children=[
-                                                                dcc.Graph(
-                                                                    id="mip-gantt-chart", responsive=True,
-                                                                    config={"displayModeBar": False},
-                                                                ),
-                                                            ]
-                                                        )
-                                                    ]),
-                                                    dcc.Graph(id="mip-summary-table"),
-                                                ],
-                                            )
-                                        ],
-                                    ),
+                                    generate_solution_tab("Quantum Hybrid Solver", "dwave", 1),
+                                    generate_solution_tab("Classical Solver (COIN-OR)", "mip", 2),
                                 ],
                             )
                         ],

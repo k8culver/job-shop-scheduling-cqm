@@ -14,25 +14,44 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.tab-content-wrapper {
-    padding: 2rem 2rem 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: calc(100vh - var(--banner-height));
-}
-
 .gantt-title {
-    margin-bottom: 0.5rem;
-    margin-left: 2.75rem;
-}
-
-#solver-select.hide-classic label:last-child {
-    display: none !important;
+    margin-bottom: 0.25rem;
 }
 
 .draglayer {
     cursor: pointer !important;
+}
+
+.solution-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.gantt-chart-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.graph-wrapper,
+.graph,
+.dash-graph {
+    height: 100%;
+}
+
+.gantt-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-right: 11rem;
+    margin-left: 3rem;
+}
+
+.makespan {
+    margin-bottom: 0.25rem;
 }
 
 .tab-fail:where(:not([data-active])),

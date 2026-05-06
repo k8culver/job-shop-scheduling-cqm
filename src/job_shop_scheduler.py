@@ -251,7 +251,7 @@ class JobShopSchedulingCQM:
         min_time_limit = sampler.min_time_limit(self.cqm)
         if time_limit is not None:
             time_limit = max(min_time_limit, time_limit)
-        raw_sampleset = sampler.sample_cqm(self.cqm, time_limit=time_limit, label="Job Shop Demo")
+        raw_sampleset = sampler.sample_cqm(self.cqm, time_limit=time_limit, label="Examples - Job Shop Scheduling")
         self.feasible_sampleset = raw_sampleset.filter(lambda d: d.is_feasible)
         num_feasible = len(self.feasible_sampleset)
         if num_feasible > 0:

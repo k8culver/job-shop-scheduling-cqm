@@ -121,6 +121,11 @@ def write_solution_to_file(
         for i in model_data.resources:
             job_sol[j].extend(list(solution[j, i]))
 
+    # Ensure the output directory exists when a nested path is provided.
+    solution_dir = os.path.dirname(solution_file_path)
+    if solution_dir:
+        os.makedirs(solution_dir, exist_ok=True)
+
     with open(solution_file_path, "w") as f:
         f.write("#Number of jobs: " + str(model_data.get_job_count()) + "\n")
         f.write("#Number of machines: " + str(model_data.get_resource_count()) + "\n")
