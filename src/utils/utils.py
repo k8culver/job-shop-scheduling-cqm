@@ -1,3 +1,17 @@
+# Copyright 2026 D-Wave
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 from collections import defaultdict
 
@@ -120,6 +134,11 @@ def write_solution_to_file(
         job_sol[j] = [j]
         for i in model_data.resources:
             job_sol[j].extend(list(solution[j, i]))
+
+    # Ensure the output directory exists when a nested path is provided.
+    solution_dir = os.path.dirname(solution_file_path)
+    if solution_dir:
+        os.makedirs(solution_dir, exist_ok=True)
 
     with open(solution_file_path, "w") as f:
         f.write("#Number of jobs: " + str(model_data.get_job_count()) + "\n")

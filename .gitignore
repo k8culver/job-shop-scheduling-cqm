@@ -5,4 +5,4 @@ cache
 build
 dist
 *.egg-info
-assets/theme.css
+output/

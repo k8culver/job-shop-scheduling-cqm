@@ -1,3 +1,17 @@
+# Copyright 2026 D-Wave
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import sys
 from collections.abc import Iterable
 
@@ -255,14 +269,14 @@ class JobShopData:
         """
         return len(self._resources)
 
-    def get_task_time_bounds(self, task, make_span: int) -> tuple[int, int]:
+    def get_task_time_bounds(self, task, makespan: int) -> tuple[int, int]:
         """Returns the minimum and maximum possible starting
         times for this task, given that prior tasks for the job
         must be completed first and subsequent tasks for the job
         must be completed after.
 
         Args:
-            make_span (int): the maximum time needed to complete all jobs
+            makespan (int): the maximum time needed to complete all jobs
         """
         job_tasks = [x for x in self.get_tasks() if x.job == task.job]
         task_position = self.get_task_position(task)
@@ -270,7 +284,7 @@ class JobShopData:
         subsequent_tasks = job_tasks[task_position + 1 :]
         prior_time = sum(x.duration for x in prior_tasks)
         subsequent_time = sum(x.duration for x in subsequent_tasks)
-        return (prior_time, make_span - subsequent_time - task.duration)
+        return (prior_time, makespan - subsequent_time - task.duration)
 
     def get_resource_tasks(self, resource: str) -> list[Task]:
         """This function returns all Tasks that require a given resource.

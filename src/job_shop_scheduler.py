@@ -1,8 +1,16 @@
-"""
-This module contains the JobShopSchedulingCQM class, which is used to build and 
-solve a Job Shop Scheduling problem using CQM.
-
-"""
+# Copyright 2026 D-Wave
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import argparse
 import sys
@@ -251,7 +259,9 @@ class JobShopSchedulingCQM:
         min_time_limit = sampler.min_time_limit(self.cqm)
         if time_limit is not None:
             time_limit = max(min_time_limit, time_limit)
-        raw_sampleset = sampler.sample_cqm(self.cqm, time_limit=time_limit, label="Job Shop Demo")
+        raw_sampleset = sampler.sample_cqm(
+            self.cqm, time_limit=time_limit, label="Examples - Job Shop Scheduling"
+        )
         self.feasible_sampleset = raw_sampleset.filter(lambda d: d.is_feasible)
         num_feasible = len(self.feasible_sampleset)
         if num_feasible > 0:
@@ -386,7 +396,7 @@ def run_shop_scheduler(
                 [
                     [
                         "Completion Time",
-                        "Max Make-Span",
+                        "Max Makespan",
                         "Model Building Time (s)",
                         "Solver Call Time (s)",
                         "Total Runtime (s)",

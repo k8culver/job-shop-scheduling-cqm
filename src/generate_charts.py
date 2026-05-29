@@ -1,4 +1,4 @@
-#    Copyright 2024 D-Wave Systems Inc.
+#    Copyright 2024 D-Wave
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-
-import pathlib
 
 import diskcache
 import pandas as pd
@@ -93,9 +91,7 @@ def get_empty_figure(message: str) -> go.Figure:
     return fig
 
 
-def generate_gantt_chart(
-    df: pd.DataFrame = None
-) -> go.Figure:
+def generate_gantt_chart(df: pd.DataFrame = None) -> go.Figure:
     """Generates a Gantt chart of the unscheduled tasks for the given scenario.
 
     Args:
@@ -132,7 +128,8 @@ def generate_gantt_chart(
     for index, data in enumerate(fig.data):
         resource = data.name
         fig.data[index].x = [
-            df[(df[Y_AXIS_LABEL] == job) & (df[COLOR_LABEL] == resource)].delta.tolist()[0] for job in data.y
+            df[(df[Y_AXIS_LABEL] == job) & (df[COLOR_LABEL] == resource)].delta.tolist()[0]
+            for job in data.y
         ]
 
     fig.layout.xaxis.type = "linear"
@@ -143,13 +140,13 @@ def generate_gantt_chart(
     return fig
 
 
-def generate_output_table(make_span: int, solver_time_limit: int, total_time: int) -> go.Figure:
+def generate_output_table(makespan: int, solver_time_limit: int, total_time: int) -> go.Figure:
     """Generates an output table for the optimization results.
-    The table will contain the make-span, solver time limit, and total time
+    The table will contain the makespan, solver time limit, and total time
     for the optimization.
 
     Args:
-        make_span (int): The make-span for the optimization.
+        makespan (int): The makespan for the optimization.
         solver_time_limit (int): The solver time limit for the optimization.
         total_time (int): The total time for the optimization.
 
@@ -159,8 +156,8 @@ def generate_output_table(make_span: int, solver_time_limit: int, total_time: in
     fig = go.Figure(
         data=[
             go.Table(
-                header=dict(values=["Make-span", "Solver Time Limit", "Total Time"]),
-                cells=dict(values=[[make_span], [f"{solver_time_limit}s"], [f"{total_time:.2f}s"]]),
+                header=dict(values=["Makespan", "Solver Time Limit", "Total Time"]),
+                cells=dict(values=[[makespan], [f"{solver_time_limit}s"], [f"{total_time:.2f}s"]]),
             )
         ]
     )
