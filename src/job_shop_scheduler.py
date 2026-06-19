@@ -17,10 +17,15 @@ import sys
 import warnings
 from time import time
 
+import numpy as np
 import pandas as pd
 from dimod import Binary, ConstrainedQuadraticModel, Integer
-from dwave.system import LeapHybridCQMSampler
+from dwave.system import LeapHybridCQMSampler, StrideHybridSolver
+
 from tabulate import tabulate
+
+from dwave.optimization.generators import job_shop_scheduling
+
 
 sys.path.append("./src")
 import utils.mip_solver as mip_solver
@@ -329,6 +334,7 @@ def run_shop_scheduler(
     job_data: JobShopData,
     solver_time_limit: int = 60,
     use_mip_solver: bool = False,
+    use_cqm_solver: bool = False,
     verbose: bool = False,
     allow_quadratic_constraints: bool = True,
     out_sol_file: str = None,
@@ -342,28 +348,31 @@ def run_shop_scheduler(
     Args:
         job_data (JobShopData): A JobShopData object that holds the data for this job shop
             scheduling problem.
-        solver_time_limit (int, optional): Upperbound on how long the schedule can be; leave empty to
+        solver_time_limit (int, optional): Upper bound on how long the schedule can be; leave empty to
             auto-calculate an appropriate value. Defaults to None.
         use_mip_solver (bool, optional): Whether to use the MIP solver instead of the CQM solver.
             Defaults to False.
+        use_cqm_solver (bool, optional): Whether to use the CQM solver. Defaults to False.
         verbose (bool, optional): Whether to print verbose output. Defaults to False.
         allow_quadratic_constraints (bool, optional): Whether to allow quadratic constraints.
             Defaults to True.
         out_sol_file (str, optional): Path to the output solution file. Defaults to None.
         out_plot_file (str, optional): Path to the output plot file. Defaults to None.
         profile (str, optional): The profile variable to pass to the Sampler. Defaults to None.
-        max_makespan (int, optional): Upperbound on how long the schedule can be; leave empty to
+        max_makespan (int, optional): Upper bound on how long the schedule can be; leave empty to
             auto-calculate an appropriate value. Defaults to None.
         greedy_multiplier (float, optional): The multiplier to apply to the greedy makespan,
-            to get the upperbound on the makespan. Defaults to 1.4.
+            to get the upper bound on the makespan. Defaults to 1.4.
 
     Returns:
-        pd.DataFrame: A DataFrame that has the following columns: Task, Start, Finish, and
-        Resource.
-
+        A DataFrame that has the following columns: Task, Start, Finish, and Resource.
     """
     if allow_quadratic_constraints and use_mip_solver:
         raise ValueError("Cannot use quadratic constraints with MIP solver")
+
+    if not use_mip_solver and not use_cqm_solver:
+        return run_stride(job_data, solver_time_limit=solver_time_limit, profile=profile)
+
     model_building_start = time()
     model = JobShopSchedulingCQM(
         model_data=job_data, max_makespan=max_makespan, greedy_multiplier=greedy_multiplier
@@ -380,13 +389,16 @@ def run_shop_scheduler(
 
     if verbose:
         print_cqm_stats(model.cqm)
+
     model_building_time = time() - model_building_start
     solver_start_time = time()
+
     if use_mip_solver:
         sol = model.call_mip_solver(time_limit=solver_time_limit)
     else:
         model.call_cqm_solver(time_limit=solver_time_limit, model_data=job_data, profile=profile)
         sol = model.best_sample
+
     solver_time = time() - solver_start_time
 
     if verbose:
@@ -423,6 +435,87 @@ def run_shop_scheduler(
 
     df = model.solution_as_dataframe()
     return df
+
+
+def _build_stride_generator_inputs(job_data: JobShopData) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Build arrays needed by ``dwave.optimization.generators.job_shop_scheduling``.
+
+    Args:
+        job_data: a JobShopData data class.
+
+    Returns:
+        A tuple containing:
+
+        - np.ndarray: times array indexed by (job, machine)
+        - np.ndarray: machines array where each row is the machine order for a job
+        - list[str]: ordered list of job labels matching array rows
+    """
+    jobs = sorted(job_data.jobs)
+    machine_order = sorted(job_data.resources)
+    machine_to_idx = {machine: idx for idx, machine in enumerate(machine_order)}
+
+    num_jobs = len(jobs)
+    num_machines = len(machine_order)
+    times = np.zeros((num_jobs, num_machines), dtype=int)
+    machines = np.zeros((num_jobs, num_machines), dtype=int)
+
+    for job_idx, job in enumerate(jobs):
+        for op_idx, task in enumerate(job_data.job_tasks[job]):
+            machine_idx = machine_to_idx[task.resource]
+            machines[job_idx, op_idx] = machine_idx
+            times[job_idx, machine_idx] = int(task.duration)
+
+    return times, machines, jobs
+
+
+def run_stride(
+    job_data: JobShopData,
+    solver_time_limit: int = 60,
+    profile: str = None,
+) -> pd.DataFrame:
+    """Solve a job-shop problem with the Stride hybrid solver and generator model.
+
+    Args:
+        job_data: A JobShopData object with the scheduling problem.
+        solver_time_limit: Solver time limit in seconds.
+        profile: Optional Leap profile.
+
+    Returns:
+        A DataFrame with Task, Start, Finish, and Resource columns.
+    """
+    times, machines, jobs = _build_stride_generator_inputs(job_data)
+    model = job_shop_scheduling(times=times, machines=machines)
+
+    with StrideHybridSolver(profile=profile) as sampler:
+        min_time_limit = int(np.ceil(sampler.estimated_min_time_limit(model)))
+        if solver_time_limit is None:
+            time_limit = min_time_limit
+        else:
+            time_limit = max(min_time_limit, int(solver_time_limit))
+
+        sampler.sample(model, time_limit=time_limit, label="Examples - Job Shop Scheduling")
+
+    if model.objective.state_size() == 0:
+        warnings.warn("Warning: Stride hybrid solver did not return any states")
+        return pd.DataFrame(columns=["Job", "Task", "Start", "Finish", "Resource"])
+
+    start_times = model.get_start_times(0)
+    end_times = model.get_end_times(0)
+
+    rows = []
+    for job_idx, job in enumerate(jobs):
+        for op_idx, task in enumerate(job_data.job_tasks[job]):
+            rows.append(
+                [
+                    job,
+                    task,
+                    int(start_times[job_idx, op_idx]),
+                    int(end_times[job_idx, op_idx]),
+                    task.resource,
+                ]
+            )
+
+    return pd.DataFrame(rows, columns=["Job", "Task", "Start", "Finish", "Resource"])
 
 
 if __name__ == "__main__":
