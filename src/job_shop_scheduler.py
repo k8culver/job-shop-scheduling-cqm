@@ -66,7 +66,7 @@ class JobShopSchedulingCQM:
             If None, the makespan will be set to a value that is greedy_mulitiplier
             times the makespan found by the greedy algorithm. Defaults to None.
         greedy_multiplier (float, optional): The multiplier to apply to the greedy makespan,
-            to get the upperbound on the makespan. Defaults to 1.4.
+            to get the upper bound on the makespan. Defaults to 1.4.
 
     Attributes:
         model_data (JobShopData): The data for the job shop scheduling
@@ -561,6 +561,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-cqm",
+        "--use_cqm_solver",
+        action="store_true",
+        help="Whether to use the CQM solver instead of the Stride or SciPy solver",
+    )
+
+    parser.add_argument(
         "-v", "--verbose", action="store_true", default=True, help="Whether to print verbose output"
     )
 
@@ -580,7 +587,7 @@ if __name__ == "__main__":
         "-mm",
         "--max_makespan",
         type=int,
-        help="Upperbound on how long the schedule can be; leave empty to auto-calculate an appropriate value.",
+        help="Upper bound on how long the schedule can be; leave empty to auto-calculate an appropriate value.",
         default=None,
     )
 
@@ -594,6 +601,7 @@ if __name__ == "__main__":
     max_makespan = args.max_makespan
     profile = args.profile
     use_mip_solver = args.use_mip_solver
+    use_cqm_solver = args.use_cqm_solver
     verbose = args.verbose
 
     job_data = JobShopData()
@@ -604,6 +612,7 @@ if __name__ == "__main__":
         time_limit,
         verbose=verbose,
         use_mip_solver=use_mip_solver,
+        use_cqm_solver=use_cqm_solver,
         allow_quadratic_constraints=allow_quadratic_constraints,
         profile=profile,
         max_makespan=max_makespan,
