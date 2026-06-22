@@ -488,10 +488,7 @@ def run_stride(
 
     with StrideHybridSolver(profile=profile) as sampler:
         min_time_limit = int(np.ceil(sampler.estimated_min_time_limit(model)))
-        if solver_time_limit is None:
-            time_limit = min_time_limit
-        else:
-            time_limit = max(min_time_limit, int(solver_time_limit))
+        time_limit = max(min_time_limit, int(solver_time_limit))
 
         sampler.sample(model, time_limit=time_limit, label="Examples - Job Shop Scheduling")
 
